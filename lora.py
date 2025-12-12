@@ -18,3 +18,12 @@ class LoRALinear(nn.Linear):
 
     def forward(self, x):
         return super().forward(x) + self.scale_factor * self.lora_b(self.lora_a(x))
+    
+
+def apply_lora(module: nn.Module, rank, alpha, target_modules):
+
+    for name, childmodule in module.named_children():
+        apply_lora(childmodule, rank, alpha, target_modules)
+
+        if isinstance(childmodule, nn.Linear) and name in target_modules:
+            setattr(module, name, LoRALinear(childmodule.in_features, childmodule.out_features, rank, alpha, childmodule.bias is not None))
